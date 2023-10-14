@@ -1,8 +1,9 @@
 #include <stdio.h>
- /**
-  * main - function of the task
-  * Return: always zero
-  */
+/**
+ * main - a program that prints the alphabet in lowercase and uppercase
+ *
+ * Return: Always 0.
+ */
 
 int main(void)
 {
