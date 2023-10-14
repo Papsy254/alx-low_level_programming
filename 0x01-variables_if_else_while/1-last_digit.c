@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+
 /**
  * main - this is a function
  * Return: number generated
@@ -30,5 +31,6 @@ int main(void)
 	{
 	printf("Last digit of %d is %d and is 0", n, m);
 	}
+
 	return (0);
 }
