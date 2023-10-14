@@ -10,10 +10,9 @@ int main(void)
 {
 char i;
 
-for (i = 'a'; i <= 'z'; i++)
+for (i = 0; i <= 10; i++)
 {
-if (i != 'e' && i != 'q')
-putchar(i);
+putchar(i + '0');
 }
 
 putchar('\n');
