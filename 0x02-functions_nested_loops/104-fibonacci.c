@@ -1,55 +1,55 @@
 #include <stdio.h>
-/**
- * print_fibonacci_98 - prints the first 98 Fibonacci numbers
- *
- * Return: void
- */
-void print_fibonacci_98(void)
-{
-	unsigned long a = 1, b = 2;
-	unsigned long a_high, a_low, b_high, b_low;
-	unsigned long split = 1000000000;
-	int i;
-
-	printf("%lu, %lu", a, b);
-	for (i = 3; i <= 98; i++)
-	{
-	if (b > split)
-	{
-	a_high = a / split;
-	a_low = a % split;
-	b_high = b / split;
-	b_low = b % split;
-
-	unsigned long next_high = a_high + b_high + (a_low + b_low) / split;
-	unsigned long next_low = (a_low + b_low) % split;
-
-	printf(", %lu%09lu", next_high, next_low);
-
-	a = b;
-	a_high = b_high;
-	a_low = b_low;
-	b = next_high * split + next_low;
-	}
-	else
-	{
-	unsigned long next = a + b;
-
-	printf(", %lu", next);
-	a = b;
-	b = next;
-	}
-	}
-	printf("\n");
-}
 
 /**
- * main - entry point of the program
+ * main - Entry point of the program
  *
  * Return: Always 0 (Success)
  */
 int main(void)
 {
-	print_fibonacci_98();
-	return (0);
+	unsigned long int first_high, first_low, second_high, second_low, next_high, next_low;
+	int i;
+	
+	first_high = 0;
+	first_low = 1;
+	second_high = 0;
+	second_low = 2;
+
+	printf("%lu, %lu, ", first_low, second_low);
+
+	for (i = 3; i <= 98; i++)
+	{
+	if (first_low + second_low > 9999999999)
+	{
+	next_low = (first_low + second_low) % 10000000000;
+	next_high = first_high + second_high + 1;
+	}
+	else
+	{
+	next_low = first_low + second_low;
+	next_high = first_high + second_high;
+	}
+
+	first_high = second_high;
+	first_low = second_low;
+	second_high = next_high;
+	second_low = next_low;
+
+	if (next_high == 0)
+	{
+	printf("%lu", next_low);
+	}
+	else
+	{
+	printf("%lu%010lu", next_high, next_low);
+	}
+
+	if (i != 98)
+	{
+	printf(", ");
+	}
+	}
+
+	printf("\n");
+	return 0;
 }
