@@ -8,14 +8,20 @@
 char *rot13(char *n)
 {
 	char *start = n;
+	 char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	char rot13[] = "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm";
+	int i;
 
 	while (*n != '\0')
 	{
-	if ((*n >= 'a' && *n <= 'm') || (*n >= 'A' && *n <= 'M'))
-	*n += 13;
-	else if ((*n >= 'n' && *n <= 'z') || (*n >= 'N' && *n <= 'Z'))
-	*n -= 13;
-
+	for (i = 0; i < 52; i++)
+	{
+	if (*n == alphabet[i])
+	{
+	*n = rot13[i];
+	break;
+	}
+	}
 	n++;
 	}
 
