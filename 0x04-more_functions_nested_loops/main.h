@@ -19,6 +19,6 @@ int _putchar(char c);
 void print_triangle(int size);
 int _putchar(char c);
 void print_number(int n);
-
+void print_positive(int n);
 
 #endif /* MAIN_H */
