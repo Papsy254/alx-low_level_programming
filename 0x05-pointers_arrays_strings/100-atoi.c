@@ -24,11 +24,11 @@ int _atoi(char *s)
 	{
 	if (result > (INT_MAX - (s[i] - '0')) / 10)
 	{
-	if (sign == 1)	
+	if (sign == 1)
 	return (INT_MAX);
 	else
 	return (INT_MIN);
-        }
+	}
 	result = result * 10 + (s[i] - '0');
 	i++;
 	}
