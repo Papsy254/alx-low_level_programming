@@ -9,25 +9,27 @@
  */
 int main(void)
 {
-	int i, sum = 0;
 	char password[84];
+	int i, sum = 0, target_sum = 2772;
 
 	srand(time(NULL));
 
-	for (i = 0; i < 84; i++)
+	for (i = 0; i < 83; i++)
 	{
 	password[i] = (rand() % 94) + 33;
 	sum += password[i];
 	putchar(password[i]);
-	if (sum > 2772)
+	if (sum >= target_sum)
 	{
 	sum -= password[i];
 	break;
 	}
 	}
-	password[i] = 2772 - sum;
+
+	password[i] = target_sum - sum;
 	putchar(password[i]);
 	putchar('\n');
 
-	return (0);
+	return 0;
 }
+
