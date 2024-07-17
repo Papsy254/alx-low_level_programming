@@ -7,5 +7,8 @@ char *str_concat(char *s1, char *s2);
 int **alloc_grid(int width, int height);
 void free_grid(int **grid, int height);
 char *argstostr(int ac, char **av);
+
+#include <stddef.h>
 char **strtow(char *str);
+void ch_free_grid(char **grid, size_t height);
 #endif

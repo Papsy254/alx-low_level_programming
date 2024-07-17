@@ -1,16 +1,16 @@
 #include "main.h"
 #include <stdlib.h>
 /**
- * ch_free_grid - main entry
- * @grid: input
- * @height: input
+ * ch_free_grid - Frees 2D array
+ * @grid: 2D array to free
+ * @height: height of the 2D array
  */
 void ch_free_grid(char **grid, size_t height)
 {
 	if (grid != NULL && height != 0)
 	{
 	for (; height > 0; height--)
-	free(grid[height]);
+	free(grid[height - 1]);
 	free(grid[0]);
 	free(grid);
 	}
@@ -35,12 +35,12 @@ char **strtow(char *str)
 	height++;
 }
 	height++;
-	aout = malloc(sizeof(char *) * (height + 1));
+	aout = malloc(sizeof(char *) * height);
 	if (aout == NULL)
 {
 	return (NULL);
 }
-	for (i = a1 = 0; i < height; i++)
+	for (i = a1 = 0; i < height -1; i++)
 	{
 	for (c = a1; str[c] != '\0'; c++)
 	{
@@ -54,13 +54,16 @@ char **strtow(char *str)
 	ch_free_grid(aout, i);
 	return (NULL);
 }
-	break;
-	}
-	}
+
 	for (j = 0; a1 <= c; a1++, j++)
 	aout[i][j] = str[a1];
 	aout[i][j] = '\0';
+	a1++;
+	break;
 	}
+	}
+}
 	aout[i] = NULL;
 	return (aout);
 }
+
