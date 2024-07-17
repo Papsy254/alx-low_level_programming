@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char **strtow(char *str);
-
 /**
  * print_tab - Prints an array of string
  * @tab: The array to print
