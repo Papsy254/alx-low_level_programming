@@ -1,6 +1,38 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
+#include "main.h"
+
+/**
+ * word_len - calculates the length of a word
+ * @str: the string to evaluate
+ *
+ * Return: length of the word
+ */
+int word_len(char *str)
+{
+	int len = 0;
+	while (str[len] && !isspace(str[len]))
+	len++;
+	return (len);
+}
+
+/**
+ * count_words - counts the number of words in a string
+ * @str: the string to evaluate
+ *
+ * Return: number of words
+ */
+int count_words(char *str)
+{
+	int i, count = 0;
+
+	for (i = 0; str[i]; i++)
+	{
+	if (!isspace(str[i]) && (i == 0 || isspace(str[i - 1])))
+	count++;
+	}
+	return (count);
+}
 
 /**
  * strtow - Splits a string into words
@@ -16,13 +48,7 @@ char **strtow(char *str)
 	if (str == NULL || *str == '\0')
 	return (NULL);
 
-	word_count = 0;
-	for (i = 0; str[i]; i++)
-	{
-	if (!isspace(str[i]) && (i == 0 || isspace(str[i - 1])))
-	word_count++;
-	}
-
+	word_count = count_words(str);
 	if (word_count == 0)
 	return (NULL);
 
@@ -35,10 +61,7 @@ char **strtow(char *str)
 	{
 	if (!isspace(str[i]))	
 	{
-	len = 0;
-	for (j = i; str[j] && !isspace(str[j]); j++)
-	len++;
-
+	len = word_len(str + i);
 	words[k] = malloc((len + 1) * sizeof(char));
 	if (words[k] == NULL)
 	{
