@@ -1,69 +1,60 @@
-#include "main.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+
 /**
- * ch_free_grid - Frees 2D array
- * @grid: 2D array to free
- * @height: height of the 2D array
- */
-void ch_free_grid(char **grid, size_t height)
-{
-	if (grid != NULL && height != 0)
-	{
-	for (; height > 0; height--)
-	free(grid[height - 1]);
-	free(grid[0]);
-	free(grid);
-	}
-}
-/**
- * strtow - splits string into two
+ * strtow - Splits a string into words
+ * @str: The string to split
  *
- * @str: string to be split
- * Return: a pointer to the new allocated memory for the string
+ * Return: Pointer to an array of strings (words)
  */
 char **strtow(char *str)
 {
-	char **aout;
-	size_t c, height, i, j, a1;
+	char **words;
+	int i, j, k, len, word_count;
 
 	if (str == NULL || *str == '\0')
 	return (NULL);
 
-	for (c = height = 0; str[c] != '\0'; c++)
+	word_count = 0;
+	for (i = 0; str[i]; i++)
 	{
-	if (str[c] != ' ' && (str[c + 1] == ' ' || str[c + 1] == '\0'))
-	height++;
-}
-	height++;
-	aout = malloc(sizeof(char *) * height);
-	if (aout == NULL)
-{
-	return (NULL);
-}
-	for (i = a1 = 0; i < height -1; i++)
-	{
-	for (c = a1; str[c] != '\0'; c++)
-	{
-	if (str[c] == ' ')
-	a1++;
-	if (str[c] != ' ' && (str[c + 1] == ' ' || str[c + 1] == '\0'))
-	{
-	aout[i] = malloc((c - a1 + 2) * sizeof(char));
-	if (aout[i] == NULL)
-{
-	ch_free_grid(aout, i);
-	return (NULL);
-}
+	if (!isspace(str[i]) && (i == 0 || isspace(str[i - 1])))
+	word_count++;
+	}
 
-	for (j = 0; a1 <= c; a1++, j++)
-	aout[i][j] = str[a1];
-	aout[i][j] = '\0';
-	a1++;
-	break;
+	if (word_count == 0)
+	return (NULL);
+
+	words = malloc((word_count + 1) * sizeof(char *));
+	if (words == NULL)
+	return (NULL);
+
+	k = 0;
+	for (i = 0; str[i]; i++)
+	{
+	if (!isspace(str[i]))	
+	{
+	len = 0;
+	for (j = i; str[j] && !isspace(str[j]); j++)
+	len++;
+
+	words[k] = malloc((len + 1) * sizeof(char));
+	if (words[k] == NULL)
+	{
+	for (i = 0; i < k; i++)
+	free(words[i]);
+	free(words);
+	return (NULL);
+	}
+
+	for (j = 0; j < len; j++, i++)
+	words[k][j] = str[i];
+	words[k][j] = '\0';
+	k++;
 	}
 	}
-}
-	aout[i] = NULL;
-	return (aout);
-}
+	words[k] = NULL;
 
+	return (words);
+}
