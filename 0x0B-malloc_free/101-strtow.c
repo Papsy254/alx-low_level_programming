@@ -36,6 +36,20 @@ int count_words(char *str)
 }
 
 /**
+ * free_words - frees memory allocated for words
+ * @words: array of words
+ * @count: number of words to free
+ */
+void free_words(char **words, int count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+	free(words[i]);
+	free(words);
+}
+
+/**
  * strtow - Splits a string into words
  * @str: The string to split
  *
@@ -66,9 +80,7 @@ char **strtow(char *str)
 	words[k] = malloc((len + 1) * sizeof(char));
 	if (words[k] == NULL)
 	{
-	for (i = 0; i < k; i++)
-	free(words[i]);
-	free(words);
+	free_words(words, k);
 	return (NULL);
 	}
 
