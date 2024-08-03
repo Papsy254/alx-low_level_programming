@@ -4,20 +4,15 @@
 
 /**
  * add_node_end - adds a new node at the end of a linked list
- * @head: pointer to the head of the list
- * @str: string to be duplicated and added to the new node
+ * @head: double pointer to the head of the list
+ * @str: string to be duplicated and added to the list
  *
  * Return: address of the new element, or NULL if it failed
  */
 list_t *add_node_end(list_t **head, const char *str)
 {
-	list_t *new, *temp;
-	size_t len;
-
-	if (str == NULL)
-	return (NULL);
-
-	len = strlen(str);
+	list_t *new; 
+	list_t *temp = *head;
 
 	new = malloc(sizeof(list_t));
 	if (new == NULL)
@@ -30,7 +25,7 @@ list_t *add_node_end(list_t **head, const char *str)
 	return (NULL);
 	}
 
-	new->len = len;
+	new->len = strlen(str);
 	new->next = NULL;
 
 	if (*head == NULL)
@@ -39,7 +34,6 @@ list_t *add_node_end(list_t **head, const char *str)
 	}
 	else
 	{
-	temp = *head;
 	while (temp->next != NULL)
 	temp = temp->next;
 	temp->next = new;
