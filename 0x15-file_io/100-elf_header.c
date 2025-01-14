@@ -1,237 +1,302 @@
+#include <elf.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <elf.h>
-#include <string.h>
 
 /**
- * print_magic - Prints the ELF magic number.
- * @header: A pointer to the ELF header structure.
+ * _strncmp - compare two strings
+ * @s1: the first string
+ * @s2: the second string
+ * @n: the max number of bytes to compare
  *
- * This function prints the magic number of the ELF file in hexadecimal format.
+ * Return: 0 if the first n bytes of s1 and s2 are equal, otherwise non-zero
  */
-void print_magic(const Elf64_Ehdr *header)
+int _strncmp(const char *s1, const char *s2, size_t n)
 {
-    printf("  Magic:   ");
-    for (int i = 0; i < EI_NIDENT; i++)
-    {
-        printf("%02x ", header->e_ident[i]);
-    }
-    printf("\n");
+	for ( ; n && *s1 && *s2; --n, ++s1, ++s2)
+	{
+		if (*s1 != *s2)
+			return (*s1 - *s2);
+	}
+	if (n)
+	{
+		if (*s1)
+			return (1);
+		if (*s2)
+			return (-1);
+	}
+	return (0);
 }
 
 /**
- * print_class - Prints the ELF class (32-bit or 64-bit).
- * @header: A pointer to the ELF header structure.
- *
- * This function prints the class of the ELF file, indicating whether it is
- * 32-bit or 64-bit.
+ * _close - close a file descriptor and print an error message upon failure
+ * @fd: the file descriptor to close
  */
-void print_class(const Elf64_Ehdr *header)
+void _close(int fd)
 {
-    printf("  Class:                              ");
-    switch (header->e_ident[EI_CLASS])
-    {
-        case ELFCLASS32:
-            printf("ELF32\n");
-            break;
-        case ELFCLASS64:
-            printf("ELF64\n");
-            break;
-        default:
-            printf("Unknown\n");
-            break;
-    }
+	if (close(fd) != -1)
+		return;
+	write(STDERR_FILENO, "Error: Can't close fd\n", 22);
+	exit(98);
 }
 
 /**
- * print_data - Prints the data encoding (little-endian or big-endian).
- * @header: A pointer to the ELF header structure.
- *
- * This function prints the data encoding of the ELF file.
+ * _read - read from a file and print an error message upon failure
+ * @fd: the file descriptor to read from
+ * @buf: the buffer to write to
+ * @count: the number of bytes to read
  */
-void print_data(const Elf64_Ehdr *header)
+void _read(int fd, char *buf, size_t count)
 {
-    printf("  Data:                               ");
-    switch (header->e_ident[EI_DATA])
-    {
-        case ELFDATA2LSB:
-            printf("2's complement, little endian\n");
-            break;
-        case ELFDATA2MSB:
-            printf("2's complement, big endian\n");
-            break;
-        default:
-            printf("Unknown\n");
-            break;
-    }
+	if (read(fd, buf, count) != -1)
+		return;
+	write(STDERR_FILENO, "Error: Can't read from file\n", 28);
+	_close(fd);
+	exit(98);
 }
 
 /**
- * print_version - Prints the ELF version.
- * @header: A pointer to the ELF header structure.
- *
- * This function prints the version of the ELF file.
+ * elf_magic - print ELF magic
+ * @buffer: the ELF header
  */
-void print_version(const Elf64_Ehdr *header)
+void elf_magic(const unsigned char *buffer)
 {
-    printf("  Version:                           %d\n", header->e_ident[EI_VERSION]);
+	unsigned int i;
+
+	if (_strncmp((const char *) buffer, ELFMAG, 4))
+	{
+		write(STDERR_FILENO, "Error: Not an ELF file\n", 23);
+		exit(98);
+	}
+
+	printf("ELF Header:\n  Magic:   ");
+
+	for (i = 0; i < 16; ++i)
+		printf("%02x%c", buffer[i], i < 15 ? ' ' : '\n');
 }
 
 /**
- * print_osabi - Prints the OS/ABI information.
- * @header: A pointer to the ELF header structure.
+ * elf_class - print ELF class
+ * @buffer: the ELF header
  *
- * This function prints the OS/ABI information of the ELF file.
+ * Return: bit mode (32 or 64)
  */
-void print_osabi(const Elf64_Ehdr *header)
+size_t elf_class(const unsigned char *buffer)
 {
-    printf("  OS/ABI:                            ");
-    switch (header->e_ident[EI_OSABI])
-    {
-        case ELFOSABI_SYSV:
-            printf("UNIX - System V\n");
-            break;
-        case ELFOSABI_HPUX:
-            printf("UNIX - HP-UX\n");
-            break;
-        case ELFOSABI_NETBSD:
-            printf("UNIX - NetBSD\n");
-            break;
-        case ELFOSABI_LINUX:
-            printf("UNIX - Linux\n");
-            break;
-        default:
-            printf("Unknown\n");
-            break;
-    }
+	printf("  %-34s ", "Class:");
+
+	if (buffer[EI_CLASS] == ELFCLASS64)
+	{
+		printf("ELF64\n");
+		return (64);
+	}
+	if (buffer[EI_CLASS] == ELFCLASS32)
+	{
+		printf("ELF32\n");
+		return (32);
+	}
+	printf("<unknown: %x>\n", buffer[EI_CLASS]);
+	return (32);
 }
 
 /**
- * print_abi_version - Prints the ABI version.
- * @header: A pointer to the ELF header structure.
+ * elf_data - print ELF data
+ * @buffer: the ELF header
  *
- * This function prints the ABI version of the ELF file.
+ * Return: 1 if big endian, otherwise 0
  */
-void print_abi_version(const Elf64_Ehdr *header)
+int elf_data(const unsigned char *buffer)
 {
-    printf("  ABI Version:                       %d\n", header->e_ident[EI_ABIVERSION]);
+	printf("  %-34s ", "Data:");
+
+	if (buffer[EI_DATA] == ELFDATA2MSB)
+	{
+		printf("2's complement, big endian\n");
+		return (1);
+	}
+	if (buffer[EI_DATA] == ELFDATA2LSB)
+	{
+		printf("2's complement, little endian\n");
+		return (0);
+	}
+	printf("Invalid data encoding\n");
+	return (0);
 }
 
 /**
- * print_type - Prints the ELF type (e.g., relocatable, executable).
- * @header: A pointer to the ELF header structure.
- *
- * This function prints the type of the ELF file.
+ * elf_version - print ELF version
+ * @buffer: the ELF header
  */
-void print_type(const Elf64_Ehdr *header)
+void elf_version(const unsigned char *buffer)
 {
-    printf("  Type:                              ");
-    switch (header->e_type)
-    {
-        case ET_NONE:
-            printf("None\n");
-            break;
-        case ET_REL:
-            printf("Relocatable\n");
-            break;
-        case ET_EXEC:
-            printf("Executable\n");
-            break;
-        case ET_DYN:
-            printf("Shared object\n");
-            break;
-        case ET_CORE:
-            printf("Core file\n");
-            break;
-        default:
-            printf("Unknown\n");
-            break;
-    }
+	printf("  %-34s %u", "Version:", buffer[EI_VERSION]);
+
+	if (buffer[EI_VERSION] == EV_CURRENT)
+		printf(" (current)\n");
+	else
+		printf("\n");
 }
 
 /**
- * print_entry_point - Prints the entry point address.
- * @header: A pointer to the ELF header structure.
- *
- * This function prints the entry point address of the ELF file.
+ * elf_osabi - print ELF OS/ABI
+ * @buffer: the ELF header
  */
-void print_entry_point(const Elf64_Ehdr *header)
+void elf_osabi(const unsigned char *buffer)
 {
-    printf("  Entry point address:               %016lx\n", header->e_entry);
+	const char *os_table[19] = {
+		"UNIX - System V",
+		"UNIX - HP-UX",
+		"UNIX - NetBSD",
+		"UNIX - GNU",
+		"<unknown: 4>",
+		"<unknown: 5>",
+		"UNIX - Solaris",
+		"UNIX - AIX",
+		"UNIX - IRIX",
+		"UNIX - FreeBSD",
+		"UNIX - Tru64",
+		"Novell - Modesto",
+		"UNIX - OpenBSD",
+		"VMS - OpenVMS",
+		"HP - Non-Stop Kernel",
+		"AROS",
+		"FenixOS",
+		"Nuxi CloudABI",
+		"Stratus Technologies OpenVOS"
+	};
+
+	printf("  %-34s ", "OS/ABI:");
+
+	if (buffer[EI_OSABI] < 19)
+		printf("%s\n", os_table[(unsigned int) buffer[EI_OSABI]]);
+	else
+		printf("<unknown: %x>\n", buffer[EI_OSABI]);
 }
 
 /**
- * print_elf_header - Prints the ELF header information.
- * @header: A pointer to the ELF header structure.
- *
- * This function prints various fields from the ELF header, including the magic number,
- * class, data encoding, version, OS ABI, ABI version, type, and entry point address.
+ * elf_abivers - print ELF ABI version
+ * @buffer: the ELF header
  */
-void print_elf_header(const Elf64_Ehdr *header)
+void elf_abivers(const unsigned char *buffer)
 {
-    printf("ELF Header:\n");
-    print_magic(header);
-    print_class(header);
-    print_data(header);
-    print_version(header);
-    print_osabi(header);
-    print_abi_version(header);
-    print_type(header);
-    print_entry_point(header);
+	printf("  %-34s %u\n", "ABI Version:", buffer[EI_ABIVERSION]);
 }
 
 /**
- * print_error - Prints an error message.
- * @msg: The error message to be printed.
- *
- * This function prints the specified error message to standard error.
+ * elf_type - print ELF type
+ * @buffer: the ELF header
+ * @big_endian: endianness (big endian if non-zero)
  */
-void print_error(const char *msg)
+void elf_type(const unsigned char *buffer, int big_endian)
 {
-    fprintf(stderr, "%s\n", msg);
+	char *type_table[5] = {
+		"NONE (No file type)",
+		"REL (Relocatable file)",
+		"EXEC (Executable file)",
+		"DYN (Shared object file)",
+		"CORE (Core file)"
+	};
+	unsigned int type;
+
+	printf("  %-34s ", "Type:");
+
+	if (big_endian)
+		type = 0x100 * buffer[16] + buffer[17];
+	else
+		type = 0x100 * buffer[17] + buffer[16];
+
+	if (type < 5)
+		printf("%s\n", type_table[type]);
+	else if (type >= ET_LOOS && type <= ET_HIOS)
+		printf("OS Specific: (%4x)\n", type);
+	else if (type >= ET_LOPROC && type <= ET_HIPROC)
+		printf("Processor Specific: (%4x)\n", type);
+	else
+		printf("<unknown: %x>\n", type);
 }
 
 /**
- * main - Entry point of the program.
- * @argc: The number of command-line arguments.
- * @argv: The array of command-line arguments.
- *
- * This function opens the specified ELF file, reads its header, and prints
- * its contents. It ensures that the file is an ELF file before attempting
- * to read and print its header.
- *
- * Return: 0 on success, or 98 if an error occurs.
+ * elf_entry - print entry point address
+ * @buffer: string containing the entry point address
+ * @bit_mode: bit mode (32 or 64)
+ * @big_endian: endianness (big endian if non-zero)
  */
-int main(int argc, char *argv[])
+void elf_entry(const unsigned char *buffer, size_t bit_mode, int big_endian)
 {
-    int fd;
-    ssize_t n_read;
-    Elf64_Ehdr header;
+	int address_size = bit_mode / 8;
 
-    if (argc != 2)
-    {
-        print_error("Usage: ./elf_header <ELF file>");
-        return 98;
-    }
+	printf("  %-34s 0x", "Entry point address:");
 
-    fd = open(argv[1], O_RDONLY);
-    if (fd == -1)
-    {
-        print_error("Error opening file");
-        return 98;
-    }
+	if (big_endian)
+	{
+		while (address_size && !*(buffer))
+			--address_size, ++buffer;
 
-    n_read = read(fd, &header, sizeof(header));
-    if (n_read < sizeof(header) || memcmp(header.e_ident, "\x7fELF", 4) != 0)
-    {
-        print_error("Not an ELF file");
-        close(fd);
-        return 98;
-    }
+		printf("%x", *buffer & 0xff);
 
-    print_elf_header(&header);
-    close(fd);
-    return 0;
+		while (--address_size > 0)
+			printf("%02x", *(++buffer) & 0xff);
+	}
+	else
+	{
+		buffer += address_size;
+
+		while (address_size && !*(--buffer))
+			--address_size;
+
+		printf("%x", *buffer & 0xff);
+
+		while (--address_size > 0)
+			printf("%02x", *(--buffer) & 0xff);
+	}
+
+	printf("\n");
+}
+
+/**
+ * main - copy a file's contents to another file
+ * @argc: the argument count
+ * @argv: the argument values
+ *
+ * Return: Always 0
+ */
+int main(int argc, const char *argv[])
+{
+	unsigned char buffer[18];
+	unsigned int bit_mode;
+	int big_endian;
+	int fd;
+
+	if (argc != 2)
+	{
+		write(STDERR_FILENO, "Usage: elf_header elf_filename\n", 31);
+		exit(98);
+	}
+
+	fd = open(argv[1], O_RDONLY);
+	if (fd == -1)
+	{
+		write(STDERR_FILENO, "Error: Can't read from file\n", 28);
+		exit(98);
+	}
+
+	_read(fd, (char *) buffer, 18);
+
+	elf_magic(buffer);
+	bit_mode = elf_class(buffer);
+	big_endian = elf_data(buffer);
+	elf_version(buffer);
+	elf_osabi(buffer);
+	elf_abivers(buffer);
+	elf_type(buffer, big_endian);
+
+	lseek(fd, 24, SEEK_SET);
+	_read(fd, (char *) buffer, bit_mode / 8);
+
+	elf_entry(buffer, bit_mode, big_endian);
+
+	_close(fd);
+
+	return (0);
 }
