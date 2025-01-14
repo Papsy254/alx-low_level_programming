@@ -1,84 +1,110 @@
-#include "main.h"
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-#define BUFFER_SIZE 1024
-
-/**
- * copy_file - Copies the content from one file to another.
- * @file_from: The source file to copy from.
- * @file_to: The destination file to copy to.
- *
- * Return: 0 on success, -1 on failure.
- */
-
-int copy_file(const char *file_from, const char *file_to)
-{
-	int fd_from, fd_to;
-	ssize_t n_read, n_written;
-	char buffer[BUFFER_SIZE];
-
-	fd_from = open(file_from, O_RDONLY);
-	if (fd_from == -1)
-		return (-1);
-
-	fd_to = open(file_to, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if (fd_to == -1)
-	{
-	close(fd_from);
-	return (-1);
-	}
-
-	while ((n_read = read(fd_from, buffer, BUFFER_SIZE)) > 0)
-	{
-	n_written = write(fd_to, buffer, n_read);
-	if (n_written != n_read)
-	{
-	close(fd_from);
-	close(fd_to);
-	return (-1);
-	}
-	}
-
-	if (n_read == -1)
-	{
-	close(fd_from);
-	close(fd_to);
-	return (-1);
-	}
-	if (close(fd_from) == -1 || close(fd_to) == -1)
-	return (-1);
-
-	return (0);
-	}
+#define BUFSIZE 1024
 
 /**
- * main - Copies the content of a file to another file.
- * @ac: Number of arguments.
- * @av: Array of arguments.
+ * _close - close a file descriptor and print an error message upon failure
+ * @fd: the file descriptor to close
  *
- * Return: Always 0.
+ * Return: 0 upon success, -1 upon failure
  */
-int main(int ac, char **av)
+int _close(int fd)
 {
-	if (ac != 3)
-	{
-	dprintf(STDERR_FILENO, "Usage: %s file_from file_to\n", av[0]);
-	exit(97);
-	}
+	if (!close(fd))
+		return (0);
+	dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+	return (-1);
 
-	if (copy_file(av[1], av[2]) == -1)
-	{
-	if (access(av[1], F_OK) != 0)
-	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
-	else if (access(av[2], W_OK) != 0)
-	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
-	else
-	dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", -1);
+}
 
-	exit(98);
+/**
+ * _read - read from a file and print an error message upon failure
+ * @filename: the name of the file to read from
+ * @fd: the file descriptor to read from
+ * @buf: the buffer to write to
+ * @count: the number of bytes to read
+ *
+ * Return: The number of bytes read, or -1 upon failure
+ */
+ssize_t _read(const char *filename, int fd, char *buf, size_t count)
+{
+	ssize_t bytes_read = read(fd, buf, count);
+
+	if (bytes_read > -1)
+		return (bytes_read);
+	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", filename);
+	return (-1);
+}
+
+/**
+ * _write - write to a file and print an error message upon failure
+ * @filename: the name of the file to write to
+ * @fd: the file descriptor to write to
+ * @buf: the buffer to read from
+ * @count: the number of bytes to write
+ *
+ * Return: The number of bytes written, or -1 upon failure
+ */
+ssize_t _write(const char *filename, int fd, const char *buf, size_t count)
+{
+	ssize_t bytes_written = write(fd, buf, count);
+
+	if (bytes_written > -1)
+		return (bytes_written);
+	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", filename);
+	return (-1);
+}
+
+/**
+ * main - copy a file's contents to another file
+ * @argc: the argument count
+ * @argv: the argument values
+ *
+ * Return: Always 1
+ */
+int main(int argc, const char *argv[])
+{
+	int fd_in, fd_out;
+	ssize_t bytes_read;
+	char buffer[BUFSIZE];
+
+	if (argc != 3)
+	{
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
+		exit(97);
 	}
+	fd_in = open(argv[1], O_RDONLY);
+	if (fd_in < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		exit(98);
+	}
+	fd_out = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	if (fd_out < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
+		_close(fd_in);
+		exit(99);
+	}
+	while ((bytes_read = _read(argv[1], fd_in, buffer, BUFSIZE)))
+	{
+		if (bytes_read < 0)
+		{
+			_close(fd_in);
+			_close(fd_out);
+			exit(98);
+		}
+		if (_write(argv[2], fd_out, buffer, bytes_read) < 0)
+		{
+			_close(fd_in);
+			_close(fd_out);
+			exit(99);
+		}
+	}
+	if ((_close(fd_in) | _close(fd_out)) < 0)
+		exit(100);
 	return (0);
 }
